@@ -1,3 +1,3 @@
 # usir
 
-Elixir server for the usir websocket subprotocol
+Elixir implementation of the usir protocol
