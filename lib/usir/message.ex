@@ -29,9 +29,9 @@ defmodule Usir.Message.Server.Resolved do
   defstruct path: [],
             state: nil,
             etag: nil,
+            body: nil,
             _locale: nil,
-            _provided_locales: nil,
-            body: nil
+            _provided_locales: nil
 end
 
 defmodule Usir.Message.Server.Unresolved do
@@ -51,7 +51,8 @@ defmodule Usir.Message.Server.Unauthorized do
 end
 
 defmodule Usir.Message.Server.MessageInvalid do
-  defstruct affordance: nil,
+  defstruct path: [],
+            affordance: nil,
             info: nil
 end
 
@@ -65,6 +66,10 @@ defmodule Usir.Message.Server.Body.Component do
             locale: nil,
             props: %{},
             affordances: %{}
+end
+
+defmodule Usir.Message.Server.Body.Resolve do
+  defstruct path: []
 end
 
 defmodule Usir.Message.Server.Body.Affordance do

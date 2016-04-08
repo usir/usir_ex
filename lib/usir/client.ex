@@ -12,18 +12,22 @@ defmodule Usir.Client do
   end
 
   def resolve(%{format: format, cache: cache}, path) do
-    message = %Message.Client.Resolve{path: join_path(path, cache)}
-    {Cache.get(cache, path), Format.encode(format, message)}
+    %Message.Client.Resolve{path: join_path(path, cache)}
+    {Cache.get(cache, path), message}
   end
 
   def authenticate(%{format: format}, method, token) do
-    message = %Message.Client.Authenticate{method: method, token: token}
-    Format.encode(format, message)
+    %Message.Client.Authenticate{method: method, token: token}
   end
 
   def message(%{format: format, cache: cache}, path, affordance, body) do
-    message = %Message.Client.Message{path: join_path(path, cache), affordance: affordance, body: body}
-    Format.encode(format, message)
+    %Message.Client.Message{path: join_path(path, cache),
+                            affordance: affordance,
+                            body: body}
+  end
+
+  def encode_packet(client = %{format: format}, messages) do
+    Format.encode(format, messages)
   end
 
   def handle_packet(client = %{format: format}, packet) do
