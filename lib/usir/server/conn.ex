@@ -12,17 +12,17 @@ defmodule Usir.Server.Conn do
   def handle_packet(conn = %{format: format}, packet, queue) do
     format
     |> Format.decode(packet)
-    |> Enum.reduce(queue, &handle_message(conn, &1, &2))
+    |> Enum.reduce({conn, queue}, &handle_message(&1, &2))
   end
 
-  defp handle_message(conn, message, queue) do
+  defp handle_message(message, {conn, queue}) do
     case message do
       %Message.Client.Resolve{path: path} ->
         resolve(conn, path, queue)
       %Message.Client.Authenticate{method: method, token: token} ->
-        Queue.push(queue, {conn.handler, :authenticate, [method, token]})
+        {conn, Queue.push(queue, {conn.handler, :authenticate, [method, token]})}
       %Message.Client.Message{path: path, affordance: affordance, body: body} ->
-        Queue.push(queue, {conn.handler, :message, [path, affordance, body]})
+        {conn, Queue.push(queue, {conn.handler, :message, [path, affordance, body]})}
       %Message.Client.ChangeLocales{locales: locales} ->
         change_locales(%{conn | locales: locales}, queue)
     end
@@ -70,19 +70,23 @@ defmodule Usir.Server.Conn do
     nil
   end
 
-  defp resolve(%{handler: handler, locales: locales, auth: auth}, components, queue) do
-    Enum.reduce(components, {[], queue}, fn({component, state, etag}, {prev, queue}) ->
+  defp resolve(%{handler: handler, locales: locales, auth: auth} = conn, components, queue) do
+    queue = Enum.reduce(components, {[], queue}, fn({component, state, etag}, {prev, queue}) ->
       path = prev ++ [component]
       queue = Queue.push(queue, {handler, :resolve, [path, state, etag, auth, locales]})
       {path, queue}
     end)
     |> elem(1)
+
+    {conn, queue}
   end
 
-  defp change_locales(%{handler: handler, locales: locales, auth: auth, pointers: pointers}, queue) do
-    Enum.reduce(pointers, queue, fn({path, {state, etag, _locale, _provided_locales}}, queue) ->
+  defp change_locales(%{handler: handler, locales: locales, auth: auth, pointers: pointers} = conn, queue) do
+    queue = Enum.reduce(pointers, queue, fn({path, {state, etag, _locale, _provided_locales}}, queue) ->
       ## TOOD make this more effecient by comparing the previous locale and provided_locales
       Queue.push(queue, {handler, :resolve, [path, state, etag, auth, locales]})
     end)
+
+    {conn, queue}
   end
 end

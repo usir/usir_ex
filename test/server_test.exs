@@ -7,10 +7,16 @@ defmodule Test.Usir.Server do
   end
 
   test "acceptable second" do
-    {"json", _conn} = Server.init(create_server(), ["json", "foo"], ["en"])
+    {"json", _conn} = Server.init(create_server(), ["foo", "json"], ["en"])
   end
 
-  test "unacceptable" do
+  test "unacceptable list" do
+    assert_raise Server.Error.Unacceptable, fn ->
+      Server.init(create_server(), ["foo", "bar"], ["en"])
+    end
+  end
+
+  test "unacceptable empty" do
     assert_raise Server.Error.Unacceptable, fn ->
       Server.init(create_server(), [], ["en"])
     end

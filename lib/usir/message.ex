@@ -57,8 +57,15 @@ defmodule Usir.Message.Server.MessageInvalid do
 end
 
 defmodule Usir.Message.Server.Error do
-  defstruct path: [],
-            info: nil
+  defexception path: [],
+               info: nil
+
+  def message(%{path: path, info: info}) when info in [nil, ""] do
+    "Got error at path #{inspect(path)}"
+  end
+  def message(%{path: path, info: info}) do
+    "Got error #{inspect(info)} at path #{inspect(path)}"
+  end
 end
 
 defmodule Usir.Message.Server.Body.Component do

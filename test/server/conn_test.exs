@@ -5,7 +5,7 @@ defmodule Test.Usir.Server.Conn do
   alias Usir.Server.Queue
 
   test "Message.Client.Resolve" do
-    q = create_conn()
+    {_, q} = create_conn()
     |> Conn.handle_packet([
       %Message.Client.Resolve{path: [
         {"foo", "state1", "tag1"},
