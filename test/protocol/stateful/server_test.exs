@@ -37,7 +37,7 @@ defmodule Test.Usir.Protocol.Stateful.Server do
 
   defp create_server(opts \\ %{}, accept \\ "term", handler \\ Handler, formats \\ %{"term" => %Usir.Format.Term{}}) do
     Usir.Server.new(handler, formats)
-    |> Protocol.init(%{accept: [accept]} |> Map.merge(opts))
+    |> Protocol.init([accept], opts[:locales] || [], opts[:auth] || %{}, opts)
     |> assert_accept(accept)
   end
 
