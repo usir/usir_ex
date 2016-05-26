@@ -12,12 +12,8 @@ defmodule Usir.Protocol.Stateful.Server do
              queue: nil,
              timeout: nil]
 
-  def init(server, opts) do
-    accept = opts[:accept] || opts[:default_accept] || []
-    locales = opts[:locales] || opts[:default_locales] || []
-    auth = opts[:auth] || %{}
-
-    {format, conn} = Usir.Server.init(server, accept, locales, auth)
+  def init(server, accepts, locales, auth, opts) do
+    {format, conn} = Usir.Server.init(server, accepts, locales, auth)
 
     state = %__MODULE__{conn: conn,
                         max_buffer_size: opts[:max_buffer_size] || 10,

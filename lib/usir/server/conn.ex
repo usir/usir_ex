@@ -12,7 +12,7 @@ defmodule Usir.Server.Conn do
   def handle_packet(conn = %{format: format}, packet, queue) do
     format
     |> Format.decode(packet)
-    |> Enum.reduce({conn, queue}, &handle_message(&1, &2))
+    |> Enum.reduce({conn, queue}, &handle_message/2)
   end
 
   defp handle_message(message, {conn, queue}) do
@@ -70,15 +70,23 @@ defmodule Usir.Server.Conn do
     nil
   end
 
-  defp resolve(%{handler: handler, locales: locales, auth: auth} = conn, components, queue) do
-    queue = Enum.reduce(components, {[], queue}, fn({component, state, etag}, {prev, queue}) ->
-      path = prev ++ [component]
-      queue = Queue.push(queue, {handler, :resolve, [path, state, etag, auth, locales]})
-      {path, queue}
+  defp resolve( conn, components, queue) do
+    queue = Enum.reduce(components, {[], queue}, fn(component, acc) ->
+      resolve_component(component, acc, conn)
     end)
     |> elem(1)
 
     {conn, queue}
+  end
+
+  defp resolve_component(component, acc, conn) when is_binary(component) do
+    resolve_component({component, nil, nil}, acc, conn)
+  end
+  defp resolve_component({component, state, etag}, {prev, queue}, conn) do
+    %{handler: handler, auth: auth, locales: locales} = conn
+    path = prev ++ [component]
+    queue = Queue.push(queue, {handler, :resolve, [path, state, etag, auth, locales]})
+    {path, queue}
   end
 
   defp change_locales(%{handler: handler, locales: locales, auth: auth, pointers: pointers} = conn, queue) do

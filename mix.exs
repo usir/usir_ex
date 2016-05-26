@@ -15,6 +15,7 @@ defmodule Usir.Mixfile do
   end
 
   defp deps do
-    []
+    [{:cowboy, github: "ninenines/cowboy", optional: true},
+     {:poison, "~> 2.1.0"}]
   end
 end
