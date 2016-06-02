@@ -1,5 +1,4 @@
 defmodule Usir.Transport.HTTP.Server.Handler do
-  alias :cowboy_req, as: Request
   alias Usir.Transport.HTTP.Server.Websocket
 
   def init(%{headers: %{"upgrade" => _}} = req, opts) do

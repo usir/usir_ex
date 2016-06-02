@@ -1,5 +1,9 @@
-defprotocol Usir.Server.Handler do
-  def authenticate(handler, method, token)
-  def resolve(handler, component, state, etag, auth, locales)
-  def handle_message(handler, affordance, message)
+defmodule Usir.Server.Handler do
+  use Behaviour
+
+  @type message :: map
+
+  defcallback authenticate(message)
+  defcallback resolve(message)
+  defcallback handle_message(message)
 end

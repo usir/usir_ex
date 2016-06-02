@@ -1,23 +1,16 @@
-defprotocol Usir.Server.Pool do
-  def init(pool)
-  def call(pool, call)
-  def handle_info(pool, message)
-  def size(pool)
-end
-
-defmodule Usir.Server.Pool.Spawn do
+defmodule Usir.Dispatch.Spawn do
   defstruct pending: %{}
 end
 
-defimpl Usir.Server.Pool, for: Usir.Server.Pool.Spawn do
+defimpl Usir.Dispatch, for: Usir.Dispatch.Spawn do
   require Logger
 
-  def init(pool) do
+  def init(dispatch) do
     :erlang.process_flag(:trap_exit, true)
-    pool
+    dispatch
   end
 
-  def call(%{pending: pending} = pool, {module, function, arguments}) do
+  def call(%{pending: pending} = dispatch, {module, function, arguments}) do
     pid = spawn_link(fn ->
       value = try do
         apply(module, function, arguments)
@@ -34,11 +27,11 @@ defimpl Usir.Server.Pool, for: Usir.Server.Pool.Spawn do
       exit({@for, value})
     end)
 
-    {:await, %{pool | pending: Map.put(pending, pid, true)}}
+    {:await, %{dispatch | pending: Map.put(pending, pid, true)}}
   end
 
-  def handle_info(%{pending: pending} = pool, {:EXIT, pid, {@for, value}}) do
-    {value, %{pool | pending: Map.delete(pending, pid)}}
+  def handle_info(%{pending: pending} = dispatch, {:EXIT, pid, {@for, value}}) do
+    {value, %{dispatch | pending: Map.delete(pending, pid)}}
   end
 
   def size(%{pending: pending}) do

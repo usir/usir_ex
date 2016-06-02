@@ -1,31 +1,38 @@
 defmodule Test.Usir.Server do
   use ExUnit.Case
-  alias Usir.Server
+  alias Usir.Message
+  alias Usir.Conn
+  alias Usir.Queue
 
-  test "acceptable first" do
-    {"msgpack", _conn} = Server.init(create_server(), ["msgpack", "json"], ["en"])
+  test "Message.Client.Resolve" do
+    {_, q} = create_conn()
+    |> Conn.decode_packet([
+      %Message.Client.Resolve{path: [
+        {"foo", "state1", "tag1"},
+        {"bar", "state2", "tag2"},
+        {"baz", "state3", "tag3"}
+      ]
+    }], %Usir.Queue.ErlQueue{})
+
+    {{Foo, :resolve, [["foo"], "state1", "tag1", %{}, ["en"]]}, q} = Queue.pop(q)
+    {{Foo, :resolve, [["foo", "bar"], "state2", "tag2", %{}, ["en"]]}, q} = Queue.pop(q)
+    {{Foo, :resolve, [["foo", "bar", "baz"], "state3", "tag3", %{}, ["en"]]}, q} = Queue.pop(q)
+    :empty = Queue.pop(q)
   end
 
-  test "acceptable second" do
-    {"json", _conn} = Server.init(create_server(), ["foo", "json"], ["en"])
-  end
-
-  test "unacceptable list" do
-    assert_raise Server.Error.Unacceptable, fn ->
-      Server.init(create_server(), ["foo", "bar"], ["en"])
-    end
-  end
-
-  test "unacceptable empty" do
-    assert_raise Server.Error.Unacceptable, fn ->
-      Server.init(create_server(), [], ["en"])
-    end
-  end
-
-  defp create_server() do
-    Server.new(nil, %{
-      "msgpack" => %{},
-      "json" => %{}
+  test "Message.Server.Resolved" do
+    {message, _} = create_conn()
+    |> Conn.handle_info(%Message.Server.Resolved{
+      path: ["foo", "bar", "baz"],
+      state: "state",
+      etag: "etag"
     })
+
+    assert ["foo", "bar", "baz"] = message.path
+  end
+
+  defp create_conn(handler \\ Foo, format \\ %Usir.Format.Term{}, locales \\ ["en"]) do
+    Usir.Server.new(%{locales: locales})
+    |> Conn.new(handler, format)
   end
 end

@@ -1,7 +1,7 @@
-defmodule Test.Usir.Protocol.Stateful.Server do
+defmodule Test.Usir.Protocol.Stateful do
   use ExUnit.Case
   alias Usir.Message
-  alias Usir.Protocol.Stateful.Server, as: Protocol
+  alias Usir.Protocol.Stateful, as: Protocol
 
   defmodule Handler do
     def resolve(["error"] = path, _, _, _, _) do
@@ -36,9 +36,12 @@ defmodule Test.Usir.Protocol.Stateful.Server do
   end
 
   defp create_server(opts \\ %{}, accept \\ "term", handler \\ Handler, formats \\ %{"term" => %Usir.Format.Term{}}) do
-    Usir.Server.new(handler, formats)
-    |> Protocol.init([accept], opts[:locales] || [], opts[:auth] || %{}, opts)
+    accepts = [accept]
+    Usir.Server
+    |> Usir.Acceptor.new(handler, formats)
+    |> Usir.Acceptor.init(accepts, opts)
     |> assert_accept(accept)
+    |> Protocol.init(opts)
   end
 
   defp assert_accept({actual, server}, expected) do

@@ -1,4 +1,4 @@
-defmodule Usir.Server.Error.Unacceptable do
+defmodule Usir.Acceptor.Error.Unacceptable do
   defexception [:provides, :requested]
 
   def message(_) do

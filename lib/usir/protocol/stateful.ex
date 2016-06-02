@@ -1,31 +1,29 @@
-defmodule Usir.Protocol.Stateful.Server do
-  alias Usir.Server.Conn
-  alias Usir.Server.Pool
-  alias Usir.Server.Queue
+defmodule Usir.Protocol.Stateful do
+  alias Usir.Conn
+  alias Usir.Dispatch
+  alias Usir.Queue
 
   defstruct [buffer: [],
              conn: nil,
              max_buffer_size: nil,
              max_timeout: nil,
              message_type: :binary,
-             pool: nil,
+             dispatch: nil,
              queue: nil,
              timeout: nil]
 
-  def init(server, accepts, locales, auth, opts) do
-    {format, conn} = Usir.Server.init(server, accepts, locales, auth)
-
-    state = %__MODULE__{conn: conn,
-                        max_buffer_size: opts[:max_buffer_size] || 10,
-                        max_timeout: opts[:max_timeout] || 10,
-                        pool: Pool.init(opts[:pool] || %Pool.Spawn{}),
-                        queue: opts[:queue] || []}
-
-    {format, state}
+  def init(conn, opts) do
+    %__MODULE__{
+      conn: conn,
+      max_buffer_size: opts[:max_buffer_size] || 10,
+      max_timeout: opts[:max_timeout] || 10,
+      dispatch: Dispatch.init(opts[:dispatch] || %Dispatch.Spawn{}),
+      queue: opts[:queue] || %Queue.ErlQueue{}
+    }
   end
 
   def handle_packet(%{conn: conn, queue: queue} = state, msg) do
-    {conn, queue} = Conn.handle_packet(conn, msg, queue)
+    {conn, queue} = Conn.decode_packet(conn, msg, queue)
 
     %{state | conn: conn, queue: queue}
     |> call()
@@ -47,29 +45,29 @@ defmodule Usir.Protocol.Stateful.Server do
     nil
   end
 
-  defp call(%{pool: pool, queue: queue} = state) do
-    case Queue.pop(queue, Pool.size(pool)) do
+  defp call(%{dispatch: dispatch, queue: queue} = state) do
+    case Queue.pop(queue, Dispatch.size(dispatch)) do
       :empty ->
         %{state | queue: queue}
       {call, queue} ->
-        case Pool.call(pool, call) do
-          {:await, pool} ->
-            call(%{state | pool: pool, queue: queue})
-          {:ok, msg, pool} ->
+        case Dispatch.call(dispatch, call) do
+          {:await, dispatch} ->
+            call(%{state | dispatch: dispatch, queue: queue})
+          {:ok, msg, dispatch} ->
             msg
-            |> handle_message(%{state | pool: pool, queue: queue})
+            |> handle_message(%{state | dispatch: dispatch, queue: queue})
             |> call()
         end
     end
   end
 
-  defp handle_message(msg, %{buffer: buffer, conn: conn, pool: pool} = state) do
-    case Pool.handle_info(pool, msg) do
+  defp handle_message(msg, %{buffer: buffer, conn: conn, dispatch: dispatch} = state) do
+    case Dispatch.handle_info(dispatch, msg) do
       nil ->
         state
-      {msg, pool} ->
+      {msg, dispatch} ->
         {msg, conn} = Conn.handle_info(conn, msg)
-        %{state | conn: conn, pool: pool, buffer: [msg | buffer]}
+        %{state | conn: conn, dispatch: dispatch, buffer: [msg | buffer]}
     end
   end
 

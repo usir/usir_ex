@@ -1,18 +1,24 @@
 defmodule Usir.Transport.HTTP.Server.Websocket do
   alias Usir.Protocol.Stateful.Server, as: Protocol
 
-  def init(req, opts) do
-    accepts = :cowboy_req.parse_header("sec-websocket-protocol", req) |> format_protocols([]) || [Map.get(opts, :default_format, "json")]
+  def init(req, {acceptor, protocol_opts}) do
+    accepts = :cowboy_req.parse_header("sec-websocket-protocol", req) |> format_protocols([]) || []
 
     qs = :cowboy_req.parse_qs(req) |> :maps.from_list()
     locales = parse_csl(qs["locales"])
 
     # TODO handle different auth methods from the connection itself, e.g. ip address
-    {format, state} = Protocol.init(opts[:server], accepts, locales, %{}, opts)
+    config = %{
+      locales: locales
+    }
+
+    {format, conn} = Usir.Acceptor.init(acceptor, accepts, config)
+
+    state = Protocol.init(conn, protocol_opts)
 
     req = :cowboy_req.set_resp_header("sec-websocket-protocol", "usir|" <> format, req)
 
-    {:cowboy_websocket, req, state, opts[:conn_timeout] || 60_000}
+    {:cowboy_websocket, req, state, protocol_opts[:conn_timeout] || 60_000}
   rescue
     _e in Usir.Server.Error.Unacceptable ->
       # TODO send appropriate response
@@ -29,7 +35,7 @@ defmodule Usir.Transport.HTTP.Server.Websocket do
       IO.puts Exception.format(:error, e, System.stacktrace)
       {:ok, req, state}
   end
-  def websocket_handle(other, req, state) do
+  def websocket_handle(_other, req, state) do
     {:ok, req, state}
   end
 

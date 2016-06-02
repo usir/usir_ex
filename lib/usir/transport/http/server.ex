@@ -1,12 +1,11 @@
 defmodule Usir.Transport.HTTP.Server do
-  def http(handler, opts \\ %{}, cowboy_options \\ []) do
-    server = Usir.Server.new(handler, opts[:formats] || %{"json" => Usir.Format.JSON})
+  def http(acceptor, protocol_opts \\ %{}, cowboy_options \\ []) do
     dispatch = :cowboy_router.compile([
       {:_, [
-        {:_, __MODULE__.Handler, Map.put(opts, :server, server)}
+        {:_, __MODULE__.Handler, {acceptor, protocol_opts}}
       ]}
     ])
-    ref = Module.concat(handler, HTTP.Server)
+    ref = Module.concat(acceptor.handler, HTTP.Server)
     :cowboy.start_clear(ref, 100, [port: 8080], %{env: %{dispatch: dispatch}})
   end
 
