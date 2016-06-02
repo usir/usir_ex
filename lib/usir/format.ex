@@ -1,6 +1,7 @@
 defprotocol Usir.Format do
   def decode(format, bin)
   def encode(format, msg)
+  def message_type(format)
 end
 
 defimpl Usir.Format, for: Atom do
@@ -10,5 +11,9 @@ defimpl Usir.Format, for: Atom do
 
   def encode(module, msg) do
     Usir.Format.encode(struct(module, []), msg)
+  end
+
+  def message_type(module) do
+    Usir.Format.encode(struct(module, []))
   end
 end

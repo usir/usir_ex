@@ -12,11 +12,11 @@ defimpl Usir.Conn, for: Usir.Client do
   alias Usir.Client.Cache
   alias Usir.Message
 
-  def handle_info(conn, handler, message) do
+  def handle_info(conn, _handler, message) do
     {message, conn}
   end
 
-  def handle_message(client = %{cache: cache}, handler, message, queue) do
+  def handle_message(client = %{cache: cache}, _handler, message, _queue) do
     case message do
       %Message.Server.Resolved{path: path, state: state, etag: etag, body: body} = m ->
         {m, %{client | cache: Cache.put(cache, path, {state, etag}, body)}}

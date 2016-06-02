@@ -10,4 +10,8 @@ defimpl Usir.Format, for: Usir.Format.Term do
   def decode(_, terms) do
     terms
   end
+
+  def message_type(_) do
+    :binary
+  end
 end

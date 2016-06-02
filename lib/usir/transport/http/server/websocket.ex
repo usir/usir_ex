@@ -1,5 +1,5 @@
 defmodule Usir.Transport.HTTP.Server.Websocket do
-  alias Usir.Protocol.Stateful.Server, as: Protocol
+  alias Usir.Protocol.Stateful, as: Protocol
 
   def init(req, {acceptor, protocol_opts}) do
     accepts = :cowboy_req.parse_header("sec-websocket-protocol", req) |> format_protocols([]) || []

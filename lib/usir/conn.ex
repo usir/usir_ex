@@ -13,7 +13,7 @@ defprotocol Usir.Conn do
   end
 
   Kernel.def encode_packet(%{format: format}, messages) do
-    Format.encode(format, messages)
+    {Format.message_type(format), Format.encode(format, messages)}
   end
 
   Kernel.def decode_packet(conn = %{format: format, backend: backend, handler: handler}, packet, queue) do

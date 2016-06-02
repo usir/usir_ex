@@ -7,7 +7,6 @@ defmodule Usir.Protocol.Stateful do
              conn: nil,
              max_buffer_size: nil,
              max_timeout: nil,
-             message_type: :binary,
              dispatch: nil,
              queue: nil,
              timeout: nil]
@@ -71,12 +70,12 @@ defmodule Usir.Protocol.Stateful do
     end
   end
 
-  defp send_packet(%{buffer: buffer, conn: conn, timeout: timeout, message_type: message_type} = state) do
+  defp send_packet(%{buffer: buffer, conn: conn, timeout: timeout} = state) do
     buffer = :lists.reverse(buffer)
     packet = Conn.encode_packet(conn, buffer)
     state = %{state | buffer: [], timeout: clear_timeout(timeout)}
 
-    {:reply, {message_type, packet}, state}
+    {:reply, packet, state}
   end
 
   defp reply(%{buffer: []} = state) do

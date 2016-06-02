@@ -12,11 +12,10 @@ defmodule Usir.Server do
 end
 
 defimpl Usir.Conn, for: Usir.Server do
-  alias Usir.Format
   alias Usir.Message
   alias Usir.Queue
 
-  def handle_info(conn, handler, message) do
+  def handle_info(conn, _handler, message) do
     case handle_info_process(conn, message) do
       nil ->
         {:error, :bad_message, conn}

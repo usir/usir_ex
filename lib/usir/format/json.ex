@@ -19,6 +19,10 @@ defimpl Usir.Format, for: Usir.Format.JSON do
     |> Poison.encode!([pretty: opts.pretty])
   end
 
+  def message_type(_) do
+    :json
+  end
+
   messages = [
     {Usir.Message.Client.Resolve, 0, [:path]},
     {Usir.Message.Client.Authenticate, 1, [:method, :token]},
