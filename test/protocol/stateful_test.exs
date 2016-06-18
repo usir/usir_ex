@@ -4,24 +4,28 @@ defmodule Test.Usir.Protocol.Stateful do
   alias Usir.Protocol.Stateful, as: Protocol
 
   defmodule Handler do
-    def resolve(["error"] = path, _, _, _, _) do
+    def resolve(%{path: "/error" = path}, _, _) do
       throw %Message.Server.Error{path: path, info: "foobar"}
     end
-    def resolve(path, _, _, _, _) do
+    def resolve(%{path: path}, _, _) do
       %Message.Server.Resolved{path: path}
     end
   end
 
   test "resolve" do
     create_server()
-    |> send_packet([%Message.Client.Resolve{path: [{"foo", nil, nil}, {"bar", nil, nil}, {"baz", nil, nil}]}])
-    |> await(3)
-    |> assert_reply(3)
+    |> send_packet([%Message.Client.Resolve{path: "/foo/bar/baz"}])
+    |> await(1)
+    |> assert_reply(1)
   end
 
   test "max buffer" do
     create_server(%{max_buffer_size: 2})
-    |> send_packet([%Message.Client.Resolve{path: [{"foo", nil, nil}, {"bar", nil, nil}, {"baz", nil, nil}]}])
+    |> send_packet([
+      %Message.Client.Resolve{path: "/foo"},
+      %Message.Client.Resolve{path: "/foo/bar"},
+      %Message.Client.Resolve{path: "/foo/bar/baz"},
+    ])
     |> await(1)
     |> assert_reply(2)
     |> await(1)
@@ -30,7 +34,7 @@ defmodule Test.Usir.Protocol.Stateful do
 
   test "error" do
     create_server()
-    |> send_packet([%Message.Client.Resolve{path: [{"error", nil, nil}]}])
+    |> send_packet([%Message.Client.Resolve{path: "/error"}])
     |> await(1)
     |> assert_reply(1)
   end

@@ -2,7 +2,7 @@ defmodule Usir.Transport.HTTP.Server.Websocket do
   alias Usir.Protocol.Stateful, as: Protocol
 
   def init(req, {acceptor, protocol_opts}) do
-    accepts = :cowboy_req.parse_header("sec-websocket-protocol", req) |> format_protocols([]) || []
+    accepts = :cowboy_req.parse_header("sec-websocket-protocol", req) |> format_protocols([]) || ["json"]
 
     qs = :cowboy_req.parse_qs(req) |> :maps.from_list()
     locales = parse_csl(qs["locales"])
@@ -31,9 +31,7 @@ defmodule Usir.Transport.HTTP.Server.Websocket do
     |> reply(req)
   rescue
     e ->
-      ## TODO return server errors
-      IO.puts Exception.format(:error, e, System.stacktrace)
-      {:ok, req, state}
+      reply_error(e, req, state)
   end
   def websocket_handle(_other, req, state) do
     {:ok, req, state}
@@ -43,12 +41,20 @@ defmodule Usir.Transport.HTTP.Server.Websocket do
     state
     |> Protocol.handle_info(msg)
     |> reply(req)
+  rescue
+    e ->
+      reply_error(e, req, state)
   end
 
   defp reply({:reply, message, state}, req) do
     {:reply, message, req, state}
   end
   defp reply({:ok, state}, req) do
+    {:ok, req, state}
+  end
+
+  defp reply_error(e, req, state) do
+    IO.puts Exception.format(:error, e, System.stacktrace)
     {:ok, req, state}
   end
 

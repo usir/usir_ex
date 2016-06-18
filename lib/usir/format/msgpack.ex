@@ -1,27 +1,27 @@
-defmodule Usir.Format.JSON do
-  defstruct pretty: false
+defmodule Usir.Format.MSGPACK do
+  defstruct([])
 
   def fetch(opts, key) do
     Map.fetch(opts, key)
   end
 end
 
-defimpl Usir.Format, for: Usir.Format.JSON do
+defimpl Usir.Format, for: Usir.Format.MSGPACK do
   import Usir.Format.Serializer
 
   def decode(opts, bin) do
     bin
-    |> Poison.decode!(opts)
+    |> Msgpax.unpack!(opts)
     |> Enum.map(&decode_message/1)
   end
 
-  def encode(opts, msg) do
+  def encode(_opts, msg) do
     msg
     |> Enum.map(&encode_message/1)
-    |> Poison.encode!([pretty: opts.pretty])
+    |> Msgpax.pack!()
   end
 
   def message_type(_) do
-    :text
+    :binary
   end
 end

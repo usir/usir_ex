@@ -1,7 +1,9 @@
 ## Client
 
 defmodule Usir.Message.Client.Resolve do
-  defstruct path: []
+  defstruct path: "/",
+            etag: nil,
+            state: nil
 end
 
 defmodule Usir.Message.Client.Authenticate do
@@ -10,7 +12,7 @@ defmodule Usir.Message.Client.Authenticate do
 end
 
 defmodule Usir.Message.Client.Message do
-  defstruct path: [],
+  defstruct path: "/",
             affordance: nil,
             body: nil
 end
@@ -26,7 +28,7 @@ end
 ## Server
 
 defmodule Usir.Message.Server.Resolved do
-  defstruct path: [],
+  defstruct path: "/",
             state: nil,
             etag: nil,
             body: nil,
@@ -35,11 +37,11 @@ defmodule Usir.Message.Server.Resolved do
 end
 
 defmodule Usir.Message.Server.Unresolved do
-  defstruct path: []
+  defstruct path: "/"
 end
 
 defmodule Usir.Message.Server.AuthenticationRequired do
-  defstruct path: []
+  defstruct path: "/"
 end
 
 defmodule Usir.Message.Server.AuthenticationInvalid do
@@ -47,17 +49,17 @@ defmodule Usir.Message.Server.AuthenticationInvalid do
 end
 
 defmodule Usir.Message.Server.Unauthorized do
-  defstruct path: []
+  defstruct path: "/"
 end
 
 defmodule Usir.Message.Server.MessageInvalid do
-  defstruct path: [],
+  defstruct path: "/",
             affordance: nil,
             info: nil
 end
 
 defmodule Usir.Message.Server.Error do
-  defexception path: [],
+  defexception path: "/",
                info: nil
 
   def message(%{path: path, info: info}) when info in [nil, ""] do
@@ -76,11 +78,11 @@ defmodule Usir.Message.Server.Body.Component do
 end
 
 defmodule Usir.Message.Server.Body.Resolve do
-  defstruct path: []
+  defstruct path: "/"
 end
 
 defmodule Usir.Message.Server.Body.Affordance do
   defstruct id: nil,
-            path: [],
-            input: %{}
+            path: "/",
+            schema: %{}
 end

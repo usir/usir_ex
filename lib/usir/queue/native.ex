@@ -16,4 +16,7 @@ defimpl Usir.Queue, for: Usir.Queue.ErlQueue do
         {job, %{queue | queue: q}}
     end
   end
+  def pop(_queue, _) do
+    :empty
+  end
 end

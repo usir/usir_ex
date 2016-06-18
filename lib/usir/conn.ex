@@ -29,7 +29,7 @@ defprotocol Usir.Conn do
   Kernel.def handle_info(conn = %{backend: backend, handler: handler}, message) do
     case handle_info(backend, handler, message) do
       {:error, error, backend} ->
-        {:error, %{conn | backend: backend}}
+        {:error, error, %{conn | backend: backend}}
       {message, backend} ->
         {message, %{conn | backend: backend}}
     end

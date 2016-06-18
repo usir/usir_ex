@@ -26,12 +26,16 @@ defimpl Usir.Conn, for: Usir.Server do
 
   def handle_message(conn, handler, message, queue) do
     case message do
-      %Message.Client.Resolve{path: path} ->
-        resolve(conn, handler, path, queue)
-      %Message.Client.Authenticate{method: method, token: token} ->
-        {conn, Queue.push(queue, {handler, :authenticate, [method, token]})}
-      %Message.Client.Message{path: path, affordance: affordance, body: body} ->
-        {conn, Queue.push(queue, {handler, :message, [path, affordance, body]})}
+      %Message.Client.Resolve{} = message ->
+        %{auth: auth, locales: locales} = conn
+        queue = Queue.push(queue, {handler, :resolve, [message, auth, locales]})
+        {conn, queue}
+      %Message.Client.Authenticate{} = message ->
+        queue = Queue.push(queue, {handler, :authenticate, [message]})
+        {conn, queue}
+      %Message.Client.Message{} = message ->
+        queue = Queue.push(queue, {handler, :message, [message]})
+        {conn, queue}
       %Message.Client.ChangeLocales{locales: locales} ->
         change_locales(%{conn | locales: locales}, queue)
     end
@@ -64,25 +68,6 @@ defimpl Usir.Conn, for: Usir.Server do
   end
   defp handle_info_process(_, _) do
     nil
-  end
-
-  defp resolve(conn, handler, components, queue) do
-    queue = Enum.reduce(components, {[], queue}, fn(component, acc) ->
-      resolve_component(component, acc, conn, handler)
-    end)
-    |> elem(1)
-
-    {conn, queue}
-  end
-
-  defp resolve_component(component, acc, conn, handler) when is_binary(component) do
-    resolve_component({component, nil, nil}, acc, conn, handler)
-  end
-  defp resolve_component({component, state, etag}, {prev, queue}, conn, handler) do
-    %{auth: auth, locales: locales} = conn
-    path = prev ++ [component]
-    queue = Queue.push(queue, {handler, :resolve, [path, state, etag, auth, locales]})
-    {path, queue}
   end
 
   defp change_locales(%{handler: handler, locales: locales, auth: auth, pointers: pointers} = conn, queue) do

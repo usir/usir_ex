@@ -14,6 +14,6 @@ defimpl Usir.Format, for: Atom do
   end
 
   def message_type(module) do
-    Usir.Format.encode(struct(module, []))
+    Usir.Format.message_type(struct(module, []))
   end
 end
