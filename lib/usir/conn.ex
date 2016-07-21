@@ -27,14 +27,17 @@ defmodule Usir.Conn do
   def decode_packet(conn = %{format: format, backend: backend, handler: handler}, packet) do
     format
     |> Format.decode(packet)
-    |> Enum.reduce({:ok, [], conn}, fn(message, {:ok, acc, conn}) ->
-      case apply(backend, :handle_message, [message]) do
-        {:ok, fun} ->
-          call(conn, fun, message, acc)
-        :error ->
-          Logger.warn("Invalid message received for #{inspect(handler)}: #{inspect(message)}")
-          {acc, conn}
-      end
+    |> Enum.reduce({:ok, [], conn}, fn
+      (message, {:ok, acc, conn}) ->
+        case apply(backend, :handle_message, [message]) do
+          {:ok, fun} ->
+            call(conn, fun, message, acc)
+          :error ->
+            Logger.warn("Invalid message received for #{inspect(handler)}: #{inspect(message)}")
+  {acc, conn}
+        end
+      (_, {:close, conn}) ->
+        {:close, conn}
     end)
     ## TODO we should probably catch errors when decoding packets and send down errors
     ##      - don't want to shutdown the whole connection just cause of one bad packet, right?
