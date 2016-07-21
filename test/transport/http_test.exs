@@ -1,7 +1,5 @@
-defmodule Test.Usir.Transport.HTTP.Server do
+defmodule Test.Usir.Transport.HTTP do
   use ExUnit.Case
-  alias Usir.Format
-  alias Usir.Format.MSGPACK
   alias Usir.Message.{Client, Server}
   alias __MODULE__.WS
 
@@ -30,13 +28,13 @@ defmodule Test.Usir.Transport.HTTP.Server do
       WS.close(client)
     end)
   end
-
+q
   defp start(acceptor, protocol_opts \\ %{}, callback) do
     {:ok, ref} = Usir.Transport.HTTP.Server.http(acceptor, protocol_opts, [port: 0])
     {_, port} = :ranch.get_addr(ref)
     address = 'ws://localhost:#{port}'
     callback.(address)
-    Usir.Transport.HTTP.Server.shutdown(ref)
+    Usir.Transport.HTTP.Server.close(ref)
   end
 
   defmodule ServerHandler do
@@ -75,12 +73,19 @@ defmodule Test.Usir.Transport.HTTP.Server do
   end
 
   defmodule WS do
+    use Usir.Client.Handler
+
     def connect(address, formats) do
-      headers = for format <- formats do
-        {"sec-websocket-protocol", "usir|" <> format}
-      end
       {:ok, _} = :application.ensure_all_started(:websocket_client)
-      {:ok, pid} = :websocket_client.start_link(address, __MODULE__, self, [extra_headers: headers])
+
+      formats = Map.take(%{
+        "msgpack" => Usir.Format.MSGPACK,
+        "json" => Usir.Format.JSON
+      }, formats)
+
+      acceptor = Usir.Acceptor.new(Usir.Client, formats, __MODULE__, %{owner: self()})
+
+      {:ok, pid} = Usir.Transport.HTTP.Client.ws(address, acceptor, %{})
       pid
     end
 
@@ -96,32 +101,33 @@ defmodule Test.Usir.Transport.HTTP.Server do
     end
 
     def close(pid) do
-      send(pid, :close)
+      Usir.Transport.HTTP.Client.close(pid)
     end
 
-    def init(owner, _req) do
-      {:ok, owner}
+    def init(%{owner: owner}, _) do
+      {:ok, %{owner: owner}}
     end
 
-    def websocket_handle({:binary, messages}, _req, owner) do
-      format = MSGPACK
-      packet = Format.decode(format, messages)
-      send(owner, {:resp, packet})
-      {:ok, owner}
+    methods = [:mounted,
+               :unmounted,
+               :not_found,
+               :authentication_required,
+               :authentication_invalid,
+               :unauthorized,
+               :authentication_acknowledged,
+               :action_acknowledged,
+               :action_invalid,
+               :error]
+
+    for fun <- methods do
+      def unquote(fun)(handler = %{owner: owner}, message) do
+        send(owner, {:resp, [message]})
+        {:noreply, handler}
+      end
     end
 
-    def websocket_info({:req, messages}, _req, owner) do
-      format = MSGPACK
-      type = Format.message_type(format)
-      packet = Format.encode(format, messages) |> IO.iodata_to_binary
-      {:reply, {type, packet}, owner}
-    end
-    def websocket_info(:close, _req, owner) do
-      {:close, "", owner}
-    end
-
-    def websocket_terminate(_, _, _) do
-      :ok
+    def handle_info(handler, {:req, message}) do
+      {:ok, message, handler}
     end
   end
 

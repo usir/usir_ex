@@ -27,7 +27,7 @@ defmodule Usir.Conn do
   def decode_packet(conn = %{format: format, backend: backend, handler: handler}, packet) do
     format
     |> Format.decode(packet)
-    |> Enum.reduce({[], conn}, fn(message, {acc, conn}) ->
+    |> Enum.reduce({:ok, [], conn}, fn(message, {:ok, acc, conn}) ->
       case apply(backend, :handle_message, [message]) do
         {:ok, fun} ->
           call(conn, fun, message, acc)
@@ -51,7 +51,7 @@ defmodule Usir.Conn do
   end
 
   def terminate(%{handler: handler, handler_state: state}, reason) do
-    apply(handler, :termainte, [state, reason])
+    apply(handler, :terminate, [state, reason])
   catch
     _, _ ->
       :ok
@@ -60,13 +60,15 @@ defmodule Usir.Conn do
   defp call(conn = %{handler: handler, handler_state: handler_state}, fun, message, acc) do
     case apply(handler, fun, [handler_state, message]) do
       {:ok, [], handler_state} ->
-        {acc, %{conn | handler_state: handler_state}}
+        {:ok, acc, %{conn | handler_state: handler_state}}
       {:ok, messages, handler_state} when is_list(messages) ->
-        {acc ++ messages, %{conn | handler_state: handler_state}}
+        {:ok, acc ++ messages, %{conn | handler_state: handler_state}}
       {:ok, %{:__struct__ => _} = message, handler_state} ->
-        {acc ++ [message], %{conn | handler_state: handler_state}}
+        {:ok, acc ++ [message], %{conn | handler_state: handler_state}}
       {:noreply, handler_state} ->
-        {acc, %{conn | handler_state: handler_state}}
+        {:ok, acc, %{conn | handler_state: handler_state}}
+      {:close, handler_state} ->
+        {:close, %{conn | handler_state: handler_state}}
     end
   rescue
     error ->
@@ -79,13 +81,15 @@ defmodule Usir.Conn do
   defp handle_error(conn = %{handler: handler, handler_state: handler_state}, kind, error, message, acc, stacktrace) do
     case apply(handler, :handle_error, [handler_state, kind, error, stacktrace, message]) do
       {:ok, [], handler_state} ->
-        {acc, %{conn | handler_state: handler_state}}
+        {:ok, acc, %{conn | handler_state: handler_state}}
       {:ok, messages, handler_state} when is_list(messages) ->
-        {acc ++ messages, %{conn | handler_state: handler_state}}
+        {:ok, acc ++ messages, %{conn | handler_state: handler_state}}
       {:ok, %{:__struct__ => _} = message, handler_state} ->
-        {acc ++ [message], %{conn | handler_state: handler_state}}
+        {:ok, acc ++ [message], %{conn | handler_state: handler_state}}
       {:noreply, handler_state} ->
-        {acc, %{conn | handler_state: handler_state}}
+        {:ok, acc, %{conn | handler_state: handler_state}}
+      {:close, handler_state} ->
+        {:close, %{conn | handler_state: handler_state}}
     end
   catch
     _, _ ->

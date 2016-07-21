@@ -42,28 +42,28 @@ defmodule Test.Usir.Conn do
   end
 
   test "return with empty list" do
-    {[], _} = create_conn(Usir.Server)
+    {:ok, [], _} = create_conn(Usir.Server)
     |> Conn.decode_packet([
       %Usir.Message.Client.Mount{}
     ])
   end
 
   test "return with message" do
-    {[_], _} = create_conn(Usir.Server)
+    {:ok, [_], _} = create_conn(Usir.Server)
     |> Conn.decode_packet([
       %Usir.Message.Client.Unmount{}
     ])
   end
 
   test "return with no response" do
-    {[], _} = create_conn(Usir.Server)
+    {:ok, [], _} = create_conn(Usir.Server)
     |> Conn.decode_packet([
       %Usir.Message.Client.Authenticate{}
     ])
   end
 
   test "handle info" do
-    {[:foo], _} = create_conn(Usir.Server)
+    {:ok, [:foo], _} = create_conn(Usir.Server)
     |> Conn.handle_info(:foo)
   end
 

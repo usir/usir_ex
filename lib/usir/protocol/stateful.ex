@@ -17,9 +17,12 @@ defmodule Usir.Protocol.Stateful do
   end
 
   def handle_packet(%{conn: conn, buffer: buffer} = state, msg) do
-    {messages, conn} = Conn.decode_packet(conn, msg)
-
-    %{state | conn: conn, buffer: buffer ++ messages}
+    case Conn.decode_packet(conn, msg) do
+      {:close, conn} ->
+        {:close, %{state | conn: conn}}
+      {:ok, messages, conn} ->
+        %{state | conn: conn, buffer: buffer ++ messages}
+    end
     |> reply()
   end
 
@@ -38,8 +41,12 @@ defmodule Usir.Protocol.Stateful do
   end
 
   defp handle_message(msg, %{buffer: buffer, conn: conn} = state) do
-    {messages, conn} = Conn.handle_info(conn, msg)
-    %{state | conn: conn, buffer: buffer ++ messages}
+    case Conn.handle_info(conn, msg) do
+      {:close, conn} ->
+        {:close, %{state | conn: conn}}
+      {:ok, messages, conn} ->
+        %{state | conn: conn, buffer: buffer ++ messages}
+    end
   end
 
   defp send_packet(%{buffer: buffer, conn: conn, timeout: timeout} = state) do
@@ -49,6 +56,9 @@ defmodule Usir.Protocol.Stateful do
     {:reply, packet, state}
   end
 
+  defp reply({:close, state}) do
+    {:close, state}
+  end
   defp reply(%{buffer: []} = state) do
     {:ok, state}
   end

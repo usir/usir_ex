@@ -10,6 +10,11 @@ defmodule Usir.Transport.HTTP.Client.Websocket do
     WS.start_link(url, __MODULE__, {acceptor, protocol_opts}, ws_opts)
   end
 
+  def close(pid) do
+    send(pid, {__MODULE__, :close})
+    :ok
+  end
+
   def init(state) do
     send(self, {__MODULE__, :init})
     {:ok, state}
@@ -37,6 +42,9 @@ defmodule Usir.Transport.HTTP.Client.Websocket do
     {:ok, state}
   end
 
+  def websocket_info({__MODULE__, :close}, _, state) do
+    {:close, "", state}
+  end
   def websocket_info({__MODULE__, :init}, req, state) do
     init(state, req)
   end
@@ -52,11 +60,14 @@ defmodule Usir.Transport.HTTP.Client.Websocket do
     :ok
   end
 
-  defp reply({:reply, message, state}) do
-    {:reply, message, state}
+  defp reply({:reply, {type, content}, state}) do
+    {:reply, {type, :erlang.iolist_to_binary(content)}, state}
   end
   defp reply({:ok, state}) do
     {:ok, state}
+  end
+  defp reply({:close, state}) do
+    {:close, "", state}
   end
 
   defp request_info(req) do
@@ -76,7 +87,7 @@ defmodule Usir.Transport.HTTP.Client.Websocket do
   end
 
   defp format_headers(%{formats: formats}) do
-    for format <- formats do
+    for {format, _} <- formats do
       {"sec-websocket-protocol", "usir|" <> format}
     end
   end

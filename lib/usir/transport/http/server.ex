@@ -19,7 +19,7 @@ defmodule Usir.Transport.HTTP.Server do
     |> start(:start_tls, ranch_options, opts)
   end
 
-  def shutdown(ref) do
+  def close(ref) do
     :cowboy.stop_listener(ref)
   end
 
