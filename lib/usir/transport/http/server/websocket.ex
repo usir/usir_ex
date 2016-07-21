@@ -1,27 +1,24 @@
 defmodule Usir.Transport.HTTP.Server.Websocket do
   alias Usir.Protocol.Stateful, as: Protocol
+  alias :cowboy_req, as: Request
+  require Logger
 
   def init(req, {acceptor, protocol_opts}) do
-    accepts = :cowboy_req.parse_header("sec-websocket-protocol", req) |> format_protocols([]) || ["json"]
+    accepts = Request.parse_header("sec-websocket-protocol", req) |> format_protocols([])
 
-    qs = :cowboy_req.parse_qs(req) |> :maps.from_list()
-    locales = parse_csl(qs["locales"])
-
-    # TODO handle different auth methods from the connection itself, e.g. ip address
-    config = %{
-      locales: locales
-    }
-
-    {format, conn} = Usir.Acceptor.init(acceptor, accepts, config)
-
+    info = request_info(req)
+    {format, conn} = Usir.Acceptor.init(acceptor, accepts, info)
     state = Protocol.init(conn, protocol_opts)
 
-    req = :cowboy_req.set_resp_header("sec-websocket-protocol", "usir|" <> format, req)
+    req = set_websocket_protocol(req, "usir|#{format}")
 
     {:cowboy_websocket, req, state, protocol_opts[:conn_timeout] || 60_000}
   rescue
-    _e in Usir.Server.Error.Unacceptable ->
-      # TODO send appropriate response
+    error in Usir.Acceptor.Error.Unacceptable ->
+      # TODO is this the best way to tell the client?
+      supported = Map.keys(error.provides) |> Enum.map(&"usir|#{&1}") |> Enum.join(", ")
+      req = set_websocket_protocol(req, supported)
+      req = Request.reply(400, req)
       {:ok, req, nil}
   end
 
@@ -29,9 +26,6 @@ defmodule Usir.Transport.HTTP.Server.Websocket do
     state
     |> Protocol.handle_packet(msg)
     |> reply(req)
-  rescue
-    e ->
-      reply_error(e, req, state)
   end
   def websocket_handle(_other, req, state) do
     {:ok, req, state}
@@ -41,9 +35,15 @@ defmodule Usir.Transport.HTTP.Server.Websocket do
     state
     |> Protocol.handle_info(msg)
     |> reply(req)
-  rescue
-    e ->
-      reply_error(e, req, state)
+  end
+
+  def terminate(_, _, nil) do
+    :ok
+  end
+  def terminate(reason, _req, state) do
+    state
+    |> Protocol.terminate(reason)
+    :ok
   end
 
   defp reply({:reply, message, state}, req) do
@@ -53,17 +53,29 @@ defmodule Usir.Transport.HTTP.Server.Websocket do
     {:ok, req, state}
   end
 
-  defp reply_error(e, req, state) do
-    IO.puts Exception.format(:error, e, System.stacktrace)
-    {:ok, req, state}
+  defp request_info(req) do
+    peer = {remote_ip, _} = Request.peer(req)
+    %Usir.Protocol{
+      headers: Request.headers(req),
+      host: Request.host(req),
+      owner: self(),
+      path: Request.path(req),
+      params: Request.parse_qs(req) |> :maps.from_list(),
+      peer: peer,
+      port: Request.port(req),
+      protocol: Protocol,
+      remote_ip: remote_ip,
+      scheme: Request.scheme(req) |> format_scheme()
+    }
   end
 
-  defp format_protocols(:undefined, _) do
-    nil
+  defp format_scheme("https"), do: :wss
+  defp format_scheme(_), do: :ws
+
+  defp set_websocket_protocol(req, protocol) do
+    Request.set_resp_header("sec-websocket-protocol", protocol, req)
   end
-  defp format_protocols([], []) do
-    nil
-  end
+
   defp format_protocols([], acc) do
     :lists.reverse(acc)
   end
@@ -73,7 +85,7 @@ defmodule Usir.Transport.HTTP.Server.Websocket do
   defp format_protocols([_ | rest], acc) do
     format_protocols(rest, acc)
   end
-
-  defp parse_csl(val) when val in ["", nil], do: nil
-  defp parse_csl(bin), do: String.split(bin, ",")
+  defp format_protocols(_, _) do
+    []
+  end
 end

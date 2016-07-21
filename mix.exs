@@ -15,8 +15,10 @@ defmodule Usir.Mixfile do
   end
 
   defp deps do
-    [{:cowboy, github: "ninenines/cowboy", optional: true},
-     {:poison, "~> 2.1.0"},
-     {:msgpax, "~> 0.8", optional: true}]
+    [{:cowboy, github: "camshaft/cowboy", optional: true},
+     {:websocket_client, github: "jeremyong/websocket_client", optional: true},
+     {:poison, "~> 2.2", optional: true},
+     {:msgpax, "~> 0.8", optional: true},
+     {:mix_test_watch, "~> 0.2", only: :dev},]
   end
 end

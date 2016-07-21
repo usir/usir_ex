@@ -1,25 +1,26 @@
 defmodule Usir.Acceptor do
-  defstruct backend: nil,
-            handler: nil,
-            formats: %{}
+  defstruct [backend: nil,
+             handler: nil,
+             handler_opts: %{},
+             formats: %{}]
 
   alias Usir.Conn
 
-  def new(backend, handler, formats) do
+  def new(backend, formats, handler, handler_opts \\ %{}) do
     %__MODULE__{
       backend: backend,
       handler: handler,
+      handler_opts: handler_opts,
       formats: formats
     }
   end
 
-  def init(%{handler: handler, formats: formats, backend: backend}, accepts, opts) do
+  def init(%{formats: formats, backend: backend, handler: handler, handler_opts: handler_opts}, accepts, protocol_info) do
     case accept(accepts, formats) do
       nil ->
         raise __MODULE__.Error.Unacceptable, provides: formats, requested: accepts
       {format, formatter} ->
-        backend = backend.new(opts)
-        {format, Conn.new(backend, handler, formatter)}
+        {format, Conn.init(backend, formatter, handler, handler_opts, protocol_info)}
     end
   end
 
