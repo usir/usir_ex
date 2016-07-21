@@ -28,7 +28,7 @@ defmodule Test.Usir.Transport.HTTP do
       WS.close(client)
     end)
   end
-q
+
   defp start(acceptor, protocol_opts \\ %{}, callback) do
     {:ok, ref} = Usir.Transport.HTTP.Server.http(acceptor, protocol_opts, [port: 0])
     {_, port} = :ranch.get_addr(ref)
