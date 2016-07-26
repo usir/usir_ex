@@ -8,11 +8,11 @@ defmodule Test.Usir.Protocol.Stateful do
       {:ok, %{}}
     end
 
-    def mount(_handler, %{path: "/error" = path}) do
-      raise %Message.Server.Error{path: path, info: "foobar"}
+    def mount(_handler, %{instance: instance, path: "/error" = path}) do
+      raise %Message.Server.Error{instance: instance, path: path, info: "foobar"}
     end
-    def mount(handler, %{path: path}) do
-      {:ok, %Message.Server.Mounted{path: path}, handler}
+    def mount(handler, %{instance: instance, path: path}) do
+      {:ok, %Message.Server.Mounted{instance: instance, path: path}, handler}
     end
 
     def handle_info(handler, message) do
@@ -26,7 +26,7 @@ defmodule Test.Usir.Protocol.Stateful do
 
   test "resolve" do
     create_server()
-    |> send_packet([%Message.Client.Mount{path: "/foo/bar/baz"}])
+    |> send_packet([%Message.Client.Mount{instance: 1, path: "/foo/bar/baz"}])
     |> assert_no_reply()
     |> timeout()
     |> assert_reply(1)
@@ -35,15 +35,15 @@ defmodule Test.Usir.Protocol.Stateful do
   test "max buffer" do
     create_server(%{max_buffer_size: 2})
     |> send_packet([
-      %Message.Client.Mount{path: "/foo"},
-      %Message.Client.Mount{path: "/foo/bar"},
+      %Message.Client.Mount{instance: 1, path: "/foo"},
+      %Message.Client.Mount{instance: 2, path: "/foo/bar"},
     ])
     |> assert_reply(2)
   end
 
   test "error" do
     create_server()
-    |> send_packet([%Message.Client.Mount{path: "/error"}])
+    |> send_packet([%Message.Client.Mount{instance: 1, path: "/error"}])
     |> assert_no_reply()
     |> timeout()
     |> assert_reply(1)
@@ -51,7 +51,7 @@ defmodule Test.Usir.Protocol.Stateful do
 
   test "send_info" do
     create_server()
-    |> send_info(%Message.Server.Mounted{path: "/foo"})
+    |> send_info(%Message.Server.Mounted{instance: 1, path: "/foo"})
     |> assert_no_reply()
     |> timeout()
     |> assert_reply(1)

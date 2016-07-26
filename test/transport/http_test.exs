@@ -8,11 +8,11 @@ defmodule Test.Usir.Transport.HTTP do
     |> start(fn(address) ->
       client = WS.connect(address, ["msgpack"])
 
-      [%{body: "Hello, 0!"}] = WS.request(client, [%Client.Mount{path: "/"}])
-      [%{body: "Hello, 1!"}] = WS.request(client, [%Client.Mount{path: "/foo"}])
-      [%Server.Unmounted{}] = WS.request(client, [%Client.Unmount{path: "/"}])
-      [%Server.Unmounted{}] = WS.request(client, [%Client.Unmount{path: "/foo"}])
-      [%{body: "Hello, 0!"}] = WS.request(client, [%Client.Mount{path: "/"}])
+      [%{body: "Hello, 0!"}] = WS.request(client, [%Client.Mount{instance: 1, path: "/"}])
+      [%{body: "Hello, 1!"}] = WS.request(client, [%Client.Mount{instance: 1, path: "/foo"}])
+      [%Server.Unmounted{}] = WS.request(client, [%Client.Unmount{instance: 1}])
+      [%Server.Unmounted{}] = WS.request(client, [%Client.Unmount{instance: 1}])
+      [%{body: "Hello, 0!"}] = WS.request(client, [%Client.Mount{instance: 1, path: "/"}])
 
       WS.close(client)
     end)
@@ -23,7 +23,7 @@ defmodule Test.Usir.Transport.HTTP do
     |> start(fn(address) ->
       client = WS.connect(address, ["msgpack"])
 
-      [%Server.Error{info: "error!"}] = WS.request(client, [%Client.Mount{path: "/error"}])
+      [%Server.Error{info: "error!"}] = WS.request(client, [%Client.Mount{instance: 1, path: "/error"}])
 
       WS.close(client)
     end)
@@ -44,19 +44,20 @@ defmodule Test.Usir.Transport.HTTP do
       {:ok, 0}
     end
 
-    def mount(_handler, %{path: "/error"}) do
-      raise Server.Error, path: "/error", info: "error!"
+    def mount(_handler, %{instance: instance, path: "/error"}) do
+      raise Server.Error, instance: instance, path: "/error", info: "error!"
     end
-    def mount(handler, %{path: path}) do
-      {:ok, %Server.Mounted{path: path, body: "Hello, #{handler}!"}, handler + 1}
-    end
-
-    def unmount(handler, %{path: path}) do
-      {:ok, %Server.Unmounted{path: path}, handler - 1}
+    def mount(handler, %{instance: instance, path: path}) do
+      {:ok, %Server.Mounted{instance: instance, path: path, body: "Hello, #{handler}!"}, handler + 1}
     end
 
-    def authenticate(handler, %{method: method}) do
-      {:ok, [%Server.AuthenticationAcknowledged{method: method}, %Server.Mounted{path: "/authed"}], handler}
+    def unmount(handler, %{instance: instance}) do
+      {:ok, %Server.Unmounted{instance: instance}, handler - 1}
+    end
+
+    def authenticate(handler, %{instance: instance, method: method}) do
+      messages = [%Server.AuthenticationAcknowledged{instance: instance, method: method}, %Server.Mounted{instance: instance, path: "/authed"}]
+      {:ok, messages, handler}
     end
 
     def action(handler, _message) do

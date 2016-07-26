@@ -5,33 +5,34 @@ defmodule Usir.Message.Client do
                  | Action.t
 
   defmodule Mount do
-    defstruct [path: "/",
+    defstruct [instance: nil,
+               path: "/",
                state: nil,
                props: %{}]
   end
 
   defmodule Unmount do
-    defstruct [path: "/"]
+    defstruct [instance: nil]
   end
 
   defmodule Authenticate do
-    defstruct [path: "/",
+    defstruct [instance: nil,
                method: nil,
                token: nil]
   end
 
   defmodule Action do
-    defstruct [path: "/",
+    defstruct [instance: nil,
                ref: nil,
                body: nil]
   end
 
   def messages do
     [
-      {Mount, 0, [:path, :state, :props]},
-      {Unmount, 1, [:path]},
-      {Authenticate, 2, [:method, :token]},
-      {Action, 3, [:path, :ref, :body]},
+      {Mount, 0, [:instance, :path, :state, :props]},
+      {Unmount, 1, [:instance]},
+      {Authenticate, 2, [:instance, :method, :token]},
+      {Action, 3, [:instance, :ref, :body]},
     ]
   end
 end
