@@ -3,7 +3,7 @@ defmodule Usir.Mixfile do
 
   def project do
     [app: :usir,
-     version: "0.1.1",
+     version: "0.2.0",
      elixir: "~> 1.2",
      description: "Elixir implementation of the usir protocol",
      build_embedded: Mix.env == :prod,
