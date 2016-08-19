@@ -26,6 +26,10 @@ defmodule Test.Usir.Conn do
       throw :action_called
     end
 
+    def response(state, _) do
+      {:noreply, state}
+    end
+
     def handle_info(state, info) do
       {:ok, [info], state}
     end

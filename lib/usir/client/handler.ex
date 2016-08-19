@@ -34,6 +34,8 @@ defmodule Usir.Client.Handler do
   defcallback authentication_acknowledged(any, Server.AuthenticationAcknowledged.t) :: return
   defcallback action_acknowledged(any, Server.ActionAcknowledged.t) :: return
   defcallback action_invalid(any, Server.ActionInvalid.t) :: return
+  defcallback info(any, Server.Info.t) :: return
+  defcallback call(any, Server.Call.t) :: return
   defcallback error(any, Server.Error.t) :: return
   defcallback handle_error(any, kind :: atom, error :: term, stacktrace :: list, message :: Server.message) :: return
   defcallback terminate(any, term) :: :ok

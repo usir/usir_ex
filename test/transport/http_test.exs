@@ -64,6 +64,10 @@ defmodule Test.Usir.Transport.HTTP do
       {:noreply, handler}
     end
 
+    def response(state, _) do
+      {:noreply, state}
+    end
+
     def handle_info(handler, _info) do
       {:noreply, handler}
     end
@@ -118,6 +122,8 @@ defmodule Test.Usir.Transport.HTTP do
                :authentication_acknowledged,
                :action_acknowledged,
                :action_invalid,
+               :info,
+               :call,
                :error]
 
     for fun <- methods do

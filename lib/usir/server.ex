@@ -13,7 +13,9 @@ defmodule Usir.Server do
       %Client.Action{} ->
         {:ok, :action}
       %Client.CallResponse{} ->
-        {:ok, :call_response}
+        {:ok, :response}
+      %Client.CallError{} ->
+        {:ok, :response}
       _ ->
         :error
     end

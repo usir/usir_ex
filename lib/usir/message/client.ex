@@ -33,6 +33,12 @@ defmodule Usir.Message.Client do
                data: nil]
   end
 
+  defmodule CallError do
+    defstruct [instance: nil,
+               ref: nil,
+               message: nil]
+  end
+
   def messages do
     [
       {Mount, 0, [:instance, :path, :state, :props]},
@@ -40,6 +46,7 @@ defmodule Usir.Message.Client do
       {Authenticate, 2, [:instance, :method, :token]},
       {Action, 3, [:instance, :ref, :body]},
       {CallResponse, 4, [:instance, :ref, :data]},
+      {CallError, 5, [:instance, :ref, :message]},
     ]
   end
 end

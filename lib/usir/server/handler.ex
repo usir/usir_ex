@@ -39,6 +39,7 @@ defmodule Usir.Server.Handler do
   defcallback unmount(any, Client.Unmount.t) :: return
   defcallback authenticate(any, Client.Authenticate.t) :: return
   defcallback action(any, Client.Action.t) :: return
+  defcallback response(any, Client.CallResponse.t | Client.CallError.t) :: return
   defcallback handle_info(any, any) :: return
   defcallback handle_error(any, kind :: atom, error :: term, stacktrace :: list, message :: Client.message) :: return
   defcallback terminate(any, term) :: :ok
