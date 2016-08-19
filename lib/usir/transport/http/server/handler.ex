@@ -8,7 +8,7 @@ defmodule Usir.Transport.HTTP.Server.Router do
     Handler.init(req, opts)
   end
 
-  defdelegate websocket_handle(msg, req, state), to: Websocket
-  defdelegate websocket_info(msg, req, state), to: Websocket
+  defdelegate websocket_handle(msg, state), to: Websocket
+  defdelegate websocket_info(msg, state), to: Websocket
   defdelegate terminate(reason, req, state), to: Websocket
 end

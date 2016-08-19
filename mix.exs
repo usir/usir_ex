@@ -17,7 +17,7 @@ defmodule Usir.Mixfile do
   end
 
   defp deps do
-    [{:cowboy, github: "camshaft/cowboy", optional: true},
+    [{:cowboy, github: "ninenines/cowboy", optional: true},
      {:websocket_client, github: "jeremyong/websocket_client", optional: true},
      {:poison, "~> 2.2", optional: true},
      {:msgpax, "~> 0.8", optional: true},

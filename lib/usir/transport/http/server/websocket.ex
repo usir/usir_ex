@@ -22,19 +22,19 @@ defmodule Usir.Transport.HTTP.Server.Websocket do
       {:ok, req, nil}
   end
 
-  def websocket_handle({type, msg}, req, state) when type in [:text, :binary] do
+  def websocket_handle({type, msg}, state) when type in [:text, :binary] do
     state
     |> Protocol.handle_packet(msg)
-    |> reply(req)
+    |> reply()
   end
-  def websocket_handle(_other, req, state) do
-    {:ok, req, state}
+  def websocket_handle(_other, state) do
+    {:ok, state}
   end
 
-  def websocket_info(msg, req, state) do
+  def websocket_info(msg, state) do
     state
     |> Protocol.handle_info(msg)
-    |> reply(req)
+    |> reply()
   end
 
   def terminate(_, _, nil) do
@@ -46,11 +46,11 @@ defmodule Usir.Transport.HTTP.Server.Websocket do
     :ok
   end
 
-  defp reply({:reply, message, state}, req) do
-    {:reply, message, req, state}
+  defp reply({:reply, message, state}) do
+    {:reply, message, state}
   end
-  defp reply({:ok, state}, req) do
-    {:ok, req, state}
+  defp reply({:ok, state}) do
+    {:ok, state}
   end
 
   defp request_info(req) do
