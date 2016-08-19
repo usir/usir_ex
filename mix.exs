@@ -21,7 +21,8 @@ defmodule Usir.Mixfile do
      {:websocket_client, github: "jeremyong/websocket_client", optional: true},
      {:poison, "~> 2.2", optional: true},
      {:msgpax, "~> 0.8", optional: true},
-     {:mix_test_watch, "~> 0.2", only: :dev},]
+     {:mix_test_watch, "~> 0.2", only: :dev},
+     {:ex_doc, ">= 0.0.0", only: :dev}]
   end
 
   defp package do
