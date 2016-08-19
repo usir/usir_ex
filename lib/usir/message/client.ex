@@ -27,12 +27,19 @@ defmodule Usir.Message.Client do
                body: nil]
   end
 
+  defmodule CallResponse do
+    defstruct [instance: nil,
+               ref: nil,
+               data: nil]
+  end
+
   def messages do
     [
       {Mount, 0, [:instance, :path, :state, :props]},
       {Unmount, 1, [:instance]},
       {Authenticate, 2, [:instance, :method, :token]},
       {Action, 3, [:instance, :ref, :body]},
+      {CallResponse, 4, [:instance, :ref, :data]},
     ]
   end
 end

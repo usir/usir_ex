@@ -57,6 +57,19 @@ defmodule Usir.Message.Server do
                info: nil]
   end
 
+  defmodule Info do
+    defstruct [instance: nil,
+               name: nil,
+               data: nil]
+  end
+
+  defmodule Call do
+    defstruct [instance: nil,
+               name: nil,
+               data: nil,
+               ref: nil]
+  end
+
   defmodule Error do
     defexception [instance: nil,
                   path: nil,
@@ -72,16 +85,18 @@ defmodule Usir.Message.Server do
 
   def messages do
     [
-      {Mounted, 4, [:instance, :path, :state, :body]},
-      {Unmounted, 5, [:instance]},
-      {NotFound, 6, [:instance, :path]},
-      {AuthenticationRequired, 7, [:instance, :methods]},
-      {AuthenticationInvalid, 8, [:instance, :method]},
-      {Unauthorized, 9, [:instance, :info]},
-      {AuthenticationAcknowledged, 10, [:instance, :method]},
-      {ActionAcknowledged, 11, [:instance, :ref]},
-      {ActionInvalid, 12, [:instance, :ref, :info]},
-      {Error, 13, [:instance, :path, :info]}
+      {Mounted, 8, [:instance, :path, :state, :body]},
+      {Unmounted, 9, [:instance]},
+      {NotFound, 10, [:instance, :path]},
+      {AuthenticationRequired, 11, [:instance, :methods]},
+      {AuthenticationInvalid, 12, [:instance, :method]},
+      {Unauthorized, 13, [:instance, :info]},
+      {AuthenticationAcknowledged, 14, [:instance, :method]},
+      {ActionAcknowledged, 15, [:instance, :ref]},
+      {ActionInvalid, 16, [:instance, :ref, :info]},
+      {Info, 17, [:instance, :name, :data]},
+      {Call, 18, [:instance, :name, :data, :ref]},
+      {Error, 19, [:instance, :path, :info]}
     ]
   end
 end

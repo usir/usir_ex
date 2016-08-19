@@ -22,6 +22,10 @@ defmodule Usir.Client do
         {:ok, :action_acknowledged}
       %Server.ActionInvalid{} ->
         {:ok, :action_invalid}
+      %Server.Info{} ->
+        {:ok, :info}
+      %Server.Call{} ->
+        {:ok, :call}
       %Server.Error{} ->
         {:ok, :error}
       _ ->
